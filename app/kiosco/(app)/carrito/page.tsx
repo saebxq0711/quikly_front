@@ -187,7 +187,7 @@ export default function CarritoPage() {
     } finally {
       setLoadingSugeridos(false);
     }
-  }, [API]);
+  }, [API, cart]);
 
   useEffect(() => {
     loadSugeridos();
