@@ -16,7 +16,15 @@ import {
   Search,
   Plus,
   ChevronRight,
+  Utensils,
 } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Producto = {
   id_producto: number;
@@ -37,6 +45,13 @@ export default function CategoriaDetallePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const API = process.env.NEXT_PUBLIC_API_URL!;
+  const FILES = process.env.NEXT_PUBLIC_FILES_URL!;
+
+  const [openModal, setOpenModal] = useState(false);
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [creating, setCreating] = useState(false);
 
   const [categoria, setCategoria] = useState<CategoriaDetalle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,32 +59,133 @@ export default function CategoriaDetallePage() {
 
   const getToken = () => localStorage.getItem("access_token");
 
-  useEffect(() => {
-    const load = async () => {
-      const token = getToken();
-      if (!token) return;
+  const load = async () => {
+    const token = getToken();
+    if (!token) return;
 
-      try {
-        const res = await fetch(`${API}/admin/restaurante/menu/categoria/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        setCategoria(data);
-      } catch (err) {
-        console.error("Error cargando categoría:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      const res = await fetch(`${API}/admin/restaurante/menu/categoria/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setCategoria(data);
+    } catch (err) {
+      console.error("Error cargando categoría:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     load();
   }, [id]);
 
-  const filteredProducts = categoria?.productos.filter((p) =>
-    p.nombre.toLowerCase().includes(search.toLowerCase())
-  ) ?? [];
+  const handleCreateProduct = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-  const activeCount = categoria?.productos.filter((p) => p.estado_id === 1).length ?? 0;
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    formData.append("categoria_id", id); // 👈 CLAVE
+
+    const token = getToken();
+
+    try {
+      const res = await fetch(`${API}/admin/restaurante/menu/producto`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      const data = await res.json();
+
+      console.log("Producto creado:", data);
+
+      setOpenModal(false);
+      await load();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const updateProductoImagen = async (id_producto: number, file: File) => {
+    const token = getToken();
+    if (!token) return;
+
+    const formData = new FormData();
+    formData.append("imagen", file);
+
+    try {
+      const res = await fetch(
+        `${API}/admin/restaurante/menu/producto/${id_producto}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        },
+      );
+
+      if (!res.ok) throw new Error(await res.text());
+
+      await load();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleImageChange = (file: File | null) => {
+    if (!file) {
+      setImagePreview(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setImagePreview(url);
+  };
+
+  const filteredProducts =
+    categoria?.productos.filter((p) =>
+      p.nombre.toLowerCase().includes(search.toLowerCase()),
+    ) ?? [];
+
+  const activeCount =
+    categoria?.productos.filter((p) => p.estado_id === 1).length ?? 0;
+
+  const toggleProductoEstado = async (id_producto: number) => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(
+        `${API}/admin/restaurante/menu/producto/${id_producto}/estado`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!res.ok) throw new Error(await res.text());
+
+      await load();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!openModal) {
+      setImagePreview(null);
+    }
+  }, [openModal]);
 
   if (loading) {
     return (
@@ -80,7 +196,9 @@ export default function CategoriaDetallePage() {
           <main className="flex-1 flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="text-muted-foreground font-medium">Cargando productos...</p>
+              <p className="text-muted-foreground font-medium">
+                Cargando productos...
+              </p>
             </div>
           </main>
         </div>
@@ -100,7 +218,7 @@ export default function CategoriaDetallePage() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver al menú
@@ -116,7 +234,10 @@ export default function CategoriaDetallePage() {
                 Gestiona los productos de esta categoría
               </p>
             </div>
-            <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button
+              onClick={() => setOpenModal(true)}
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               <Plus className="w-4 h-4" />
               Nuevo producto
             </Button>
@@ -130,8 +251,12 @@ export default function CategoriaDetallePage() {
                   <Package className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total productos</p>
-                  <p className="text-2xl font-bold text-foreground">{categoria?.productos.length ?? 0}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total productos
+                  </p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {categoria?.productos.length ?? 0}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -141,8 +266,12 @@ export default function CategoriaDetallePage() {
                   <Eye className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Activos</p>
-                  <p className="text-2xl font-bold text-foreground">{activeCount}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Activos
+                  </p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {activeCount}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -152,7 +281,9 @@ export default function CategoriaDetallePage() {
                   <EyeOff className="w-6 h-6 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Inactivos</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Inactivos
+                  </p>
                   <p className="text-2xl font-bold text-foreground">
                     {(categoria?.productos.length ?? 0) - activeCount}
                   </p>
@@ -179,8 +310,12 @@ export default function CategoriaDetallePage() {
             <Card className="p-12 bg-card border-0 shadow-sm">
               <div className="text-center">
                 <Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                <p className="text-lg font-medium text-foreground mb-1">No hay productos</p>
-                <p className="text-muted-foreground">Agrega productos a esta categoría</p>
+                <p className="text-lg font-medium text-foreground mb-1">
+                  No hay productos
+                </p>
+                <p className="text-muted-foreground">
+                  Agrega productos a esta categoría
+                </p>
               </div>
             </Card>
           ) : (
@@ -188,25 +323,50 @@ export default function CategoriaDetallePage() {
               {filteredProducts.map((p) => (
                 <Card
                   key={p.id_producto}
-                  onClick={() => router.push(`/admin/menu/producto/${p.id_producto}?categoria=${id}`)}
+                  onClick={() =>
+                    router.push(
+                      `/admin/menu/producto/${p.id_producto}?categoria=${id}`,
+                    )
+                  }
                   className={`group bg-card border-0 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden ${
                     p.estado_id !== 1 ? "opacity-60" : ""
                   }`}
                 >
                   <div className="flex gap-4 p-5">
                     {/* Product Image */}
-                    <div className="relative w-24 h-24 rounded-xl bg-muted/50 overflow-hidden flex-shrink-0">
-                      {p.img_producto ? (
-                        <img
-                          src={p.img_producto}
-                          alt={p.nombre}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ImageIcon className="w-8 h-8 text-muted-foreground/30" />
-                        </div>
-                      )}
+                    <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                      {/* Fallback */}
+                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground z-0">
+                        <Utensils className="w-5 h-5 opacity-50" />
+                      </div>
+
+                      {/* Imagen */}
+                      {p.img_producto &&
+                        p.img_producto.trim() !== "" &&
+                        p.img_producto !== "null" && (
+                          <img
+                            src={`${FILES}${p.img_producto}`}
+                            alt={`Imagen de ${p.nombre}`}
+                            className="w-full h-full object-cover z-10 relative"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        )}
+
+                      {/* Upload overlay */}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            updateProductoImagen(p.id_producto, file);
+                          }
+                        }}
+                      />
                     </div>
 
                     {/* Product Info */}
@@ -228,7 +388,9 @@ export default function CategoriaDetallePage() {
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center gap-1.5">
                           <DollarSign className="w-4 h-4 text-emerald-600" />
-                          <span className="font-bold text-foreground">{p.precio_base}</span>
+                          <span className="font-bold text-foreground">
+                            {p.precio_base}
+                          </span>
                         </div>
                         <span
                           className={`text-xs px-2.5 py-1 rounded-full font-medium ${
@@ -239,6 +401,21 @@ export default function CategoriaDetallePage() {
                         >
                           {p.estado_id === 1 ? "Activo" : "Inactivo"}
                         </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // 🧠 CLAVE
+                              toggleProductoEstado(p.id_producto);
+                            }}
+                            className="p-2 rounded-lg hover:bg-muted"
+                          >
+                            {p.estado_id === 1 ? (
+                              <Eye className="w-4 h-4 text-emerald-600" /> 
+                            ) : (
+                              <EyeOff className="w-4 h-4 text-red-500" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -248,6 +425,117 @@ export default function CategoriaDetallePage() {
           )}
         </main>
       </div>
+      <Dialog open={openModal} onOpenChange={setOpenModal}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          {/* Header */}
+          <div className="p-6 border-b bg-gradient-to-r from-primary/5 to-transparent">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold">
+                Crear nuevo producto
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Agrega un producto atractivo a tu menú
+              </p>
+            </DialogHeader>
+          </div>
+
+          <form onSubmit={handleCreateProduct} className="p-6 space-y-6">
+            {/* Layout principal */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* LEFT: imagen */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">
+                  Imagen del producto
+                </label>
+
+                <div className="relative w-full h-48 rounded-xl border-2 border-dashed border-muted flex items-center justify-center overflow-hidden bg-muted/30 hover:bg-muted/50 transition">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <ImageIcon className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+                      <p className="text-xs text-muted-foreground">
+                        Subir imagen
+                      </p>
+                    </div>
+                  )}
+
+                  <input
+                    type="file"
+                    name="imagen"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={(e) =>
+                      handleImageChange(e.target.files?.[0] || null)
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* RIGHT: inputs */}
+              <div className="space-y-4">
+                {/* Nombre */}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Nombre</label>
+                  <input
+                    name="nombre"
+                    required
+                    placeholder="Ej: Hamburguesa BBQ"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                  />
+                </div>
+
+                {/* Precio */}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Precio</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      name="precio_base"
+                      type="number"
+                      required
+                      placeholder="0.00"
+                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-muted/50 border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Descripción */}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Descripción</label>
+                  <textarea
+                    name="descripcion"
+                    placeholder="Describe el producto..."
+                    rows={3}
+                    className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpenModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                disabled={creating}
+                type="submit"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {creating ? "Creando..." : "Crear producto"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

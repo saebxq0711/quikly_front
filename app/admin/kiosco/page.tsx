@@ -15,7 +15,7 @@ type UsuarioKiosco = {
   apellidos: string;
   telefono: string;
   correo: string;
-  estado_id: number; // 1 activo, 2 inactivo
+  estado_id: number;
   img_restaurante?: string;
 };
 
@@ -30,8 +30,8 @@ export default function UsuarioKioscoPage() {
 
   const [usuario, setUsuario] = useState<UsuarioKiosco | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  // form crear
   const [form, setForm] = useState({
     documento: "",
     nombres: "",
@@ -43,6 +43,7 @@ export default function UsuarioKioscoPage() {
   });
 
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   /* =====================
      DATA
@@ -50,6 +51,7 @@ export default function UsuarioKioscoPage() {
 
   const cargarUsuario = async () => {
     setLoading(true);
+
     const res = await fetch(`${API}/admin/kiosco/usuario`, {
       headers: { Authorization: `Bearer ${token()}` },
     });
@@ -70,25 +72,40 @@ export default function UsuarioKioscoPage() {
   }, []);
 
   /* =====================
+     HELPERS
+  ===================== */
+
+  const validarPassword = () => {
+    if (form.password.length < 6) {
+      return "Debe tener al menos 6 caracteres";
+    }
+    if (form.password !== form.confirmPassword) {
+      return "Las contraseñas no coinciden";
+    }
+    return null;
+  };
+
+  /* =====================
      ACTIONS
   ===================== */
 
   const crearUsuario = async () => {
     setError(null);
+    setSuccess(null);
 
-    if (form.password !== form.confirmPassword) {
-      setError("Las contraseñas no coinciden");
-      return;
-    }
+    const err = validarPassword();
+    if (err) return setError(err);
 
-    await fetch(`${API}/admin/kiosco/usuario`, {
+    setSaving(true);
+
+    const res = await fetch(`${API}/admin/kiosco/usuario`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token()}`,
       },
       body: JSON.stringify({
-        tipo_documento_id: 3, // NIT fijo
+        tipo_documento_id: 3,
         documento: form.documento,
         nombres: form.nombres,
         apellidos: form.apellidos,
@@ -98,12 +115,19 @@ export default function UsuarioKioscoPage() {
       }),
     });
 
+    setSaving(false);
+
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.detail || "Error al crear usuario");
+      return;
+    }
+
+    setSuccess("Usuario creado correctamente");
     cargarUsuario();
   };
 
   const toggleEstado = async () => {
-    if (!usuario) return;
-
     await fetch(`${API}/admin/kiosco/usuario/estado`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token()}` },
@@ -113,12 +137,15 @@ export default function UsuarioKioscoPage() {
   };
 
   const cambiarPassword = async () => {
-    if (form.password !== form.confirmPassword) {
-      setError("Las contraseñas no coinciden");
-      return;
-    }
+    setError(null);
+    setSuccess(null);
 
-    await fetch(`${API}/admin/kiosco/usuario/password`, {
+    const err = validarPassword();
+    if (err) return setError(err);
+
+    setSaving(true);
+
+    const res = await fetch(`${API}/admin/kiosco/usuario/password`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -126,6 +153,16 @@ export default function UsuarioKioscoPage() {
       },
       body: JSON.stringify({ password: form.password }),
     });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.detail || "Error al cambiar contraseña");
+      return;
+    }
+
+    setSuccess("Contraseña actualizada correctamente");
 
     setForm({ ...form, password: "", confirmPassword: "" });
   };
@@ -146,18 +183,17 @@ export default function UsuarioKioscoPage() {
             Usuario del kiosco
           </h1>
 
+          {/* ALERTAS */}
+          {error && <Alert type="error" message={error} />}
+          {success && <Alert type="success" message={success} />}
+
           {loading ? (
             <p className="text-zinc-500">Cargando…</p>
           ) : !usuario ? (
-            /* =====================
-               NO EXISTE
-            ===================== */
-            <div className="bg-white border rounded-xl p-6 space-y-4">
+            <div className="bg-white border rounded-xl p-6 space-y-4 shadow-sm">
               <p className="text-zinc-600">
                 Aún no has creado el usuario para el kiosco.
               </p>
-
-              {error && <p className="text-sm text-red-600">{error}</p>}
 
               <FormInput
                 label="NIT"
@@ -185,6 +221,8 @@ export default function UsuarioKioscoPage() {
                 onChange={(v) => setForm({ ...form, correo: v })}
               />
 
+              <PasswordRules />
+
               <FormInput
                 label="Contraseña"
                 type="password"
@@ -200,16 +238,14 @@ export default function UsuarioKioscoPage() {
 
               <button
                 onClick={crearUsuario}
-                className="bg-zinc-900 text-white px-5 py-2 rounded-lg"
+                disabled={saving}
+                className="bg-primary text-black px-5 py-2 rounded-lg disabled:opacity-50"
               >
-                Crear usuario del kiosco
+                {saving ? "Creando..." : "Crear usuario"}
               </button>
             </div>
           ) : (
-            /* =====================
-               EXISTE
-            ===================== */
-            <div className="bg-white border rounded-xl p-6 space-y-6">
+            <div className="bg-white border rounded-xl p-6 space-y-6 shadow-sm">
               <div className="flex justify-between items-center">
                 <div>
                   <p className="font-medium text-zinc-900">
@@ -233,7 +269,6 @@ export default function UsuarioKioscoPage() {
               {usuario.img_restaurante && (
                 <img
                   src={`${FILES}${usuario.img_restaurante}`}
-                  alt="Restaurante"
                   className="w-40 rounded-lg border"
                 />
               )}
@@ -243,7 +278,7 @@ export default function UsuarioKioscoPage() {
                   Cambiar contraseña
                 </h3>
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                <PasswordRules />
 
                 <FormInput
                   label="Nueva contraseña"
@@ -260,9 +295,10 @@ export default function UsuarioKioscoPage() {
 
                 <button
                   onClick={cambiarPassword}
-                  className="bg-zinc-900 text-white px-4 py-2 rounded-lg"
+                  disabled={saving}
+                  className="bg-primary text-black px-4 py-2 rounded-lg disabled:opacity-50"
                 >
-                  Cambiar contraseña
+                  {saving ? "Actualizando..." : "Cambiar contraseña"}
                 </button>
               </div>
             </div>
@@ -276,6 +312,36 @@ export default function UsuarioKioscoPage() {
 /* =====================
    COMPONENTS
 ===================== */
+
+function Alert({
+  type,
+  message,
+}: {
+  type: "error" | "success";
+  message: string;
+}) {
+  return (
+    <div
+      className={`p-3 rounded-lg text-sm border ${
+        type === "error"
+          ? "bg-red-50 text-red-700 border-red-200"
+          : "bg-green-50 text-green-700 border-green-200"
+      }`}
+    >
+      {message}
+    </div>
+  );
+}
+
+function PasswordRules() {
+  return (
+    <div className="text-xs text-zinc-500 bg-zinc-100 p-3 rounded-lg">
+      <p>• Mínimo 6 caracteres</p>
+      <p>• No repetir la contraseña actual</p>
+      <p>• No usar las últimas contraseñas</p>
+    </div>
+  );
+}
 
 function FormInput({
   label,
@@ -295,7 +361,7 @@ function FormInput({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2 text-sm"
+        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
       />
     </div>
   );

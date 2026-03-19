@@ -5,7 +5,7 @@ import { isAuthenticated, getRole, redirectToRolePage, logout } from "./auth";
 
 interface GuardProps {
   children: ReactNode;
-  allowedRoles?: string[]; // Si no se pasa, es página pública
+  allowedRoles?: string[];
 }
 
 export default function Guard({ children, allowedRoles }: GuardProps) {
@@ -15,31 +15,43 @@ export default function Guard({ children, allowedRoles }: GuardProps) {
     const auth = isAuthenticated();
     const rol = getRole();
 
-    // Página pública (login, index)
+    // Página pública
     if (!allowedRoles) {
       if (auth) {
-        redirectToRolePage(); // ya tiene sesión → lo mando a su home
+        redirectToRolePage();
       } else {
-        setLoading(false); // puede ver la página pública
+        setLoading(false);
       }
       return;
     }
 
     // Página privada
     if (!auth) {
-      logout(); // fuerza a login
+      logout();
       return;
     }
 
     if (!rol || !allowedRoles.includes(rol)) {
-      redirectToRolePage(); // no tiene permiso → lo mando a su home
+      redirectToRolePage();
       return;
     }
 
-    setLoading(false); // todo ok, puede ver la página
+    setLoading(false);
   }, []);
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-[var(--primary)]"></div>
+
+          <p className="text-sm text-gray-500">
+            Cargando...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

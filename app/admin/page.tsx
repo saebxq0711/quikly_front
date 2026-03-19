@@ -68,6 +68,14 @@ export default function AdminRestaurantePage() {
   const [loading, setLoading] = useState(true);
   const { restaurante } = useRestaurante();
 
+  const formatCOP = (value: number) => {
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
@@ -202,14 +210,14 @@ export default function AdminRestaurantePage() {
     },
     {
       label: "Ventas hoy",
-      value: `$${data.kpis.ventas_hoy.toFixed(2)}`,
+      value: formatCOP(data.kpis.ventas_hoy),
       icon: DollarSign,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
     },
     {
       label: "Ticket promedio",
-      value: `$${data.kpis.ticket_promedio.toFixed(2)}`,
+      value: formatCOP(data.kpis.ticket_promedio),
       icon: TrendingUp,
       color: "text-amber-600",
       bgColor: "bg-amber-50",

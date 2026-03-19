@@ -153,25 +153,35 @@ export default function CarritoPage() {
   /* =========================
      Load sugeridos
   ========================= */
-  const loadSugeridos = useCallback(async () => {
-    if (!API) return;
+  let currentRequest = 0;
 
+  const loadSugeridos = useCallback(async () => {
+    const requestId = ++currentRequest;
+
+    if (!API) return;
     setLoadingSugeridos(true);
 
     try {
       const token = localStorage.getItem("access_token");
       if (!token) return;
 
-      const res = await fetch(`${API}/kiosco/productos/sugeridos?limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const excludeIds = cart.map((c) => c.id_producto).join(",");
+
+      const res = await fetch(
+        `${API}/kiosco/productos/sugeridos?limit=4&exclude_ids=${excludeIds}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (!res.ok) return;
 
       const data: ProductoSugerido[] = await res.json();
-      const ids = new Set(cart.map((c) => c.id_producto));
 
-      setSugeridos(data.filter((p) => !ids.has(p.id)).slice(0, 4));
+      // 🔥 evita race condition
+      if (requestId !== currentRequest) return;
+
+      setSugeridos(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -194,8 +204,9 @@ export default function CarritoPage() {
     }, 300);
   };
 
-  const handleAddSuggested = (p: ProductoSugerido) => {
+  const handleAddSuggested = async (p: ProductoSugerido) => {
     setAddingItem(p.id);
+
     addToCart({
       id_producto: p.id,
       nombre: p.nombre,
@@ -206,11 +217,37 @@ export default function CarritoPage() {
       seleccion: [],
       img: p.img,
     });
+
     resetInactivity();
-    setTimeout(() => {
+
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      // 🔥 construyes exclusión: carrito + el que acabas de agregar
+      const excludeIds = [...cart.map((c) => c.id_producto), p.id].join(",");
+
+      const res = await fetch(
+        `${API}/kiosco/productos/sugeridos?limit=1&exclude_ids=${excludeIds}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (!res.ok) return;
+
+      const data: ProductoSugerido[] = await res.json();
+      const nuevo = data[0];
+
+      setSugeridos((prev) => {
+        const filtrados = prev.filter((x) => x.id !== p.id);
+        return nuevo ? [...filtrados, nuevo] : filtrados;
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
       setAddingItem(null);
-      loadSugeridos();
-    }, 500);
+    }
   };
 
   /* =========================

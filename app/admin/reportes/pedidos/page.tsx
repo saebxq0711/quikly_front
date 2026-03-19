@@ -115,7 +115,7 @@ export default function ReportePedidosPage() {
 
             <button
               onClick={() => router.back()}
-              className="text-sm text-gray-400 hover:text-white"
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               ← Volver
             </button>

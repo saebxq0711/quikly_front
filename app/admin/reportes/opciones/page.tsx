@@ -84,7 +84,7 @@ export default function ReporteOpcionesPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="text-sm text-gray-400 hover:text-white transition"
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               ← Volver
             </button>

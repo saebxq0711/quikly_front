@@ -34,12 +34,12 @@ export default function SidebarAdmin() {
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-14 h-14 rounded-xl bg-sidebar-accent flex items-center justify-center overflow-hidden ring-2 ring-sidebar-primary/20">
+            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center overflow-hidden ring-2 ring-sidebar-primary/20">
               {restaurante.logo ? (
                 <img
                   src={restaurante.logo}
                   alt={restaurante.nombre}
-                  className="object-cover w-full h-full"
+                  className="object-contain w-full h-full p-1"
                 />
               ) : (
                 <span className="text-lg font-bold text-sidebar-primary">

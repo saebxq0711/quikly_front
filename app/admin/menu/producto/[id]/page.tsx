@@ -190,7 +190,7 @@ export default function ProductoDetallePage() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver

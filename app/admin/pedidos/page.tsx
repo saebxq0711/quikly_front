@@ -118,6 +118,19 @@ const ESTADO_CHART_COLORS: Record<number, string> = {
   7: "#10b981",
 };
 
+// Transiciones válidas de estado
+const TRANSICIONES_VALIDAS: Record<number, number[]> = {
+  5: [4, 6], // pendiente → aprobado / rechazado
+  4: [7], // aprobado → entregado
+  6: [], // rechazado → final
+  7: [], // entregado → final
+};
+
+// Función helper para obtener estados disponibles
+const getEstadosDisponibles = (estadoActual: number): number[] => {
+  return TRANSICIONES_VALIDAS[estadoActual] || [];
+};
+
 export default function PedidosAdminPage() {
   const API = process.env.NEXT_PUBLIC_API_URL!;
   const { restaurante } = useRestaurante();
@@ -153,14 +166,34 @@ export default function PedidosAdminPage() {
     }
   };
 
-  const marcarEntregado = async (id: number) => {
+  const actualizarEstado = async (id: number, estado_id: number) => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
-    const res = await fetch(`${API}/admin/pedidos/${id}/entregado`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) loadPedidos();
+
+    // 🔥 1. Actualización optimista (UI inmediata)
+    setPedidos((prev) =>
+      prev.map((p) => (p.id_pedido === id ? { ...p, estado_id } : p)),
+    );
+
+    try {
+      const res = await fetch(`${API}/admin/pedidos/${id}/estado`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ estado_id }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Error actualizando estado");
+      }
+    } catch (error) {
+      // 🔥 2. Rollback si falla
+      console.error(error);
+
+      loadPedidos(); // fallback seguro
+    }
   };
 
   useEffect(() => {
@@ -268,6 +301,14 @@ export default function PedidosAdminPage() {
     page * pageSize,
   );
 
+  const formatCOP = (value: number) => {
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -304,14 +345,14 @@ export default function PedidosAdminPage() {
     },
     {
       label: "Total ventas",
-      value: `$${totalVentas.toFixed(2)}`,
+      value: formatCOP(totalVentas),
       icon: DollarSign,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
     },
     {
       label: "Ticket promedio",
-      value: `$${ticketPromedio.toFixed(2)}`,
+      value: formatCOP(ticketPromedio),
       icon: TrendingUp,
       color: "text-amber-600",
       bgColor: "bg-amber-50",
@@ -355,7 +396,7 @@ export default function PedidosAdminPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                Gestión de Pedidos
+                Gestion de Pedidos
               </h1>
               <p className="text-muted-foreground mt-1">
                 Administra y da seguimiento a todos los pedidos
@@ -465,7 +506,7 @@ export default function PedidosAdminPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Buscar por nombre, ID o teléfono..."
+                  placeholder="Buscar por nombre, ID o telefono..."
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -568,6 +609,9 @@ export default function PedidosAdminPage() {
                       };
                       const EstadoIcon = estadoConfig.icon;
                       const isExpanded = expandedRows.includes(p.id_pedido);
+                      const estadosDisponibles = getEstadosDisponibles(
+                        p.estado_id,
+                      );
 
                       return (
                         <React.Fragment key={p.id_pedido}>
@@ -635,18 +679,32 @@ export default function PedidosAdminPage() {
 
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                {p.estado_id === 4 && (
-                                  <Button
-                                    size="sm"
-                                    onClick={(e) => {
+                                {estadosDisponibles.length > 0 ? (
+                                  <select
+                                    value=""
+                                    onChange={(e) => {
                                       e.stopPropagation();
-                                      marcarEntregado(p.id_pedido);
+                                      if (e.target.value) {
+                                        actualizarEstado(
+                                          p.id_pedido,
+                                          Number(e.target.value),
+                                        );
+                                      }
                                     }}
-                                    className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="px-2 py-1 text-xs rounded-lg border bg-background cursor-pointer"
                                   >
-                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                    Entregar
-                                  </Button>
+                                    <option value="">Cambiar a...</option>
+                                    {estadosDisponibles.map((estadoId) => (
+                                      <option key={estadoId} value={estadoId}>
+                                        {ESTADO_CONFIG[estadoId]?.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <span className="px-2 py-1 text-xs text-muted-foreground">
+                                    Estado final
+                                  </span>
                                 )}
 
                                 <Button

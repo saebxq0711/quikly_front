@@ -166,8 +166,8 @@ export default function KioscoAppLayout({ children }: { children: ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
 
-  const getImageUrl = (path?: string) => {
-    if (!path) return null;
+  const getImageUrl = (path?: string | null): string | undefined => {
+    if (!path) return undefined;
     return `${FILES.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
   };
 
@@ -175,6 +175,8 @@ export default function KioscoAppLayout({ children }: { children: ReactNode }) {
     pathname.startsWith("/kiosco/carrito") ||
     pathname.startsWith("/kiosco/checkout");
   const itemCount = getItemCount();
+
+  const [imgError, setImgError] = useState<Record<string, boolean>>({});
 
   // Track scroll for header shadow
   useEffect(() => {
@@ -360,6 +362,9 @@ export default function KioscoAppLayout({ children }: { children: ReactNode }) {
                   const unitPrice = item.precio + extras;
                   const totalItem = unitPrice * item.cantidad;
 
+                  const imgUrl = getImageUrl(item.img);
+                  const showImg = !!imgUrl && !imgError[item.id];
+
                   const seleccionCount = item.seleccion?.length || 0;
 
                   return (
@@ -377,14 +382,20 @@ export default function KioscoAppLayout({ children }: { children: ReactNode }) {
                       <div className="flex gap-4">
                         {/* Item Image/Placeholder */}
                         <div className="w-16 h-16 rounded-xl bg-background flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {item.img ? (
+                          {showImg ? (
                             <Image
-                              src={getImageUrl(item.img)!}
+                              src={imgUrl as string} // 👈 aquí le dices a TS: “confía, no es null”
                               alt={item.nombre}
                               width={64}
                               height={64}
                               className="object-cover w-full h-full"
                               unoptimized
+                              onError={() =>
+                                setImgError((prev) => ({
+                                  ...prev,
+                                  [item.id]: true,
+                                }))
+                              }
                             />
                           ) : (
                             <PackageIcon className="w-6 h-6 text-muted-foreground" />
