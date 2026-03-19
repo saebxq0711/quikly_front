@@ -187,7 +187,7 @@ export default function CarritoPage() {
     } finally {
       setLoadingSugeridos(false);
     }
-  }, [API, cart]);
+  }, [API]);
 
   useEffect(() => {
     loadSugeridos();
@@ -204,9 +204,10 @@ export default function CarritoPage() {
     }, 300);
   };
 
-  const handleAddSuggested = async (p: ProductoSugerido) => {
+  const handleAddSuggested = (p: ProductoSugerido) => {
     setAddingItem(p.id);
 
+    // 1. Agregar al carrito
     addToCart({
       id_producto: p.id,
       nombre: p.nombre,
@@ -218,36 +219,14 @@ export default function CarritoPage() {
       img: p.img,
     });
 
+    // 2. Quitar inmediatamente de sugeridos (UI reactiva)
+    setSugeridos((prev) => prev.filter((x) => x.id !== p.id));
+
     resetInactivity();
 
-    try {
-      const token = localStorage.getItem("access_token");
-      if (!token) return;
-
-      // 🔥 construyes exclusión: carrito + el que acabas de agregar
-      const excludeIds = [...cart.map((c) => c.id_producto), p.id].join(",");
-
-      const res = await fetch(
-        `${API}/kiosco/productos/sugeridos?limit=1&exclude_ids=${excludeIds}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (!res.ok) return;
-
-      const data: ProductoSugerido[] = await res.json();
-      const nuevo = data[0];
-
-      setSugeridos((prev) => {
-        const filtrados = prev.filter((x) => x.id !== p.id);
-        return nuevo ? [...filtrados, nuevo] : filtrados;
-      });
-    } catch (err) {
-      console.error(err);
-    } finally {
+    setTimeout(() => {
       setAddingItem(null);
-    }
+    }, 300);
   };
 
   /* =========================
