@@ -49,7 +49,6 @@ export default function HeaderAdmin() {
 
       {/* Right Section */}
       <div className="flex items-center gap-3">
-
         {/* Divider */}
         <div className="w-px h-8 bg-border mx-2" />
 
@@ -72,7 +71,7 @@ export default function HeaderAdmin() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 p-2">
             <DropdownMenuItem
-              onClick={logout}
+              onClick={() => logout()}
               className="gap-3 py-2.5 cursor-pointer rounded-lg text-destructive focus:text-destructive focus:bg-destructive/10"
             >
               <LogOut className="w-4 h-4" />
