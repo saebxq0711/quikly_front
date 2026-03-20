@@ -1,31 +1,10 @@
-import { logout, getRole, isTokenExpiringSoon, refreshToken } from "./auth";
+import { logout, refreshToken, getToken } from "./auth";
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const rol = getRole();
+  let token = getToken();
 
-  if (rol !== "kiosco" && isTokenExpiringSoon()) {
-    await refreshToken();
-  }
-
-  let token =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-
-  let res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-
-  // 💥 SI EXPIRÓ → INTENTO DE RECUPERACIÓN
-  if (res.status === 401 && rol !== "kiosco") {
-    await refreshToken();
-
-    token = localStorage.getItem("access_token");
-
-    res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+  const makeRequest = async () => {
+    return fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -33,11 +12,25 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
+  };
 
-    // 🔴 si vuelve a fallar → logout real
+  let res = await makeRequest();
+
+  // 💥 SIEMPRE intenta refresh (incluido kiosco)
+  if (res.status === 401) {
+    const refreshed = await refreshToken();
+
+    if (!refreshed) {
+      logout(); // aquí podrías customizar kiosco luego
+      throw new Error("Sesión expirada");
+    }
+
+    token = getToken();
+    res = await makeRequest();
+
     if (res.status === 401) {
       logout();
-      throw new Error("Sesión expirada");
+      throw new Error("Sesión inválida");
     }
   }
 

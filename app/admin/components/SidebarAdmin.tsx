@@ -28,6 +28,9 @@ export default function SidebarAdmin() {
   const { restaurante } = useRestaurante();
   const pathname = usePathname();
 
+  const nombre = restaurante?.nombre || "Restaurante";
+  const inicial = nombre.charAt(0) || "R";
+
   return (
     <aside className="w-72 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border">
       {/* Logo Section */}
@@ -35,26 +38,29 @@ export default function SidebarAdmin() {
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center overflow-hidden ring-2 ring-sidebar-primary/20">
-              {restaurante.logo ? (
+              {restaurante?.logo ? (
                 <img
                   src={restaurante.logo}
-                  alt={restaurante.nombre}
+                  alt={nombre}
                   className="object-contain w-full h-full p-1"
                 />
               ) : (
                 <span className="text-lg font-bold text-sidebar-primary">
-                  {restaurante.nombre?.charAt(0) || "R"}
+                  {inicial}
                 </span>
               )}
             </div>
+
+            {/* status dot */}
             <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-sidebar" />
           </div>
+
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider">
               Restaurante
             </p>
             <p className="font-semibold text-sidebar-foreground truncate">
-              {restaurante.nombre}
+              {nombre}
             </p>
           </div>
         </div>
@@ -65,6 +71,7 @@ export default function SidebarAdmin() {
         <p className="px-3 mb-3 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">
           Menú principal
         </p>
+
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
@@ -98,8 +105,12 @@ export default function SidebarAdmin() {
       {/* Footer */}
       <div className="p-4 border-t border-sidebar-border">
         <div className="px-4 py-3 rounded-xl bg-sidebar-accent/50">
-          <p className="text-xs text-sidebar-foreground/50 mb-1">Powered by</p>
-          <p className="text-sm font-semibold text-sidebar-primary">Quikly</p>
+          <p className="text-xs text-sidebar-foreground/50 mb-1">
+            Powered by
+          </p>
+          <p className="text-sm font-semibold text-sidebar-primary">
+            Quikly
+          </p>
         </div>
       </div>
     </aside>

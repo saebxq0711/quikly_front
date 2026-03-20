@@ -32,12 +32,11 @@ export function Header() {
           <div className="flex items-center gap-4">
             {!isLoginPage && (
               <Link href="/login">
-                <Button variant="ghost" className="hidden sm:inline-flex">
+                <Button variant="ghost" className="bg-accent text-accent-foreground hover:bg-accent/90">
                   Iniciar sesión
                 </Button>
               </Link>
             )}
-            <Button className="bg-accent text-accent-foreground hover:bg-accent/90">Solicitar demo</Button>
           </div>
         </div>
       </div>

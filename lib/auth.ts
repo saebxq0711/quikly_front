@@ -79,25 +79,28 @@ export function isTokenExpiringSoon(): boolean {
   }
 }
 
-export async function refreshToken() {
+export async function refreshToken(): Promise<boolean> {
   const token = getToken();
-  if (!token) return;
+  if (!token) return false;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    },
-  );
+    );
 
-  if (!res.ok) {
-    logout();
-    return;
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    saveSession(data.access_token, data.rol);
+
+    return true;
+  } catch {
+    return false;
   }
-
-  const data = await res.json();
-  saveSession(data.access_token, data.rol);
 }
