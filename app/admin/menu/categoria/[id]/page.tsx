@@ -45,7 +45,6 @@ export default function CategoriaDetallePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const API = process.env.NEXT_PUBLIC_API_URL!;
-  const FILES = process.env.NEXT_PUBLIC_FILES_URL!;
 
   const [openModal, setOpenModal] = useState(false);
 
@@ -341,18 +340,17 @@ export default function CategoriaDetallePage() {
                       </div>
 
                       {/* Imagen */}
-                      {p.img_producto &&
-                        p.img_producto.trim() !== "" &&
-                        p.img_producto !== "null" && (
-                          <img
-                            src={`${FILES}${p.img_producto}`}
-                            alt={`Imagen de ${p.nombre}`}
-                            className="w-full h-full object-cover z-10 relative"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        )}
+                      {p.img_producto ? (
+                        <img
+                          key={p.img_producto} // 👈 importante
+                          src={p.img_producto}
+                          alt={`Imagen de ${p.nombre}`}
+                          className="w-full h-full object-cover z-10 relative"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : null}
 
                       {/* Upload overlay */}
                       <input
@@ -362,9 +360,25 @@ export default function CategoriaDetallePage() {
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) {
-                            updateProductoImagen(p.id_producto, file);
-                          }
+                          if (!file) return;
+
+                          const preview = URL.createObjectURL(file);
+
+                          // 🔥 update inmediato en UI
+                          setCategoria((prev) => {
+                            if (!prev) return prev;
+
+                            return {
+                              ...prev,
+                              productos: prev.productos.map((prod) =>
+                                prod.id_producto === p.id_producto
+                                  ? { ...prod, img_producto: preview }
+                                  : prod,
+                              ),
+                            };
+                          });
+
+                          updateProductoImagen(p.id_producto, file);
                         }}
                       />
                     </div>
@@ -410,7 +424,7 @@ export default function CategoriaDetallePage() {
                             className="p-2 rounded-lg hover:bg-muted"
                           >
                             {p.estado_id === 1 ? (
-                              <Eye className="w-4 h-4 text-emerald-600" /> 
+                              <Eye className="w-4 h-4 text-emerald-600" />
                             ) : (
                               <EyeOff className="w-4 h-4 text-red-500" />
                             )}

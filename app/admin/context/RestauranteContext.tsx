@@ -1,7 +1,13 @@
 // app/context/RestauranteContext.tsx
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
 type Restaurante = {
   nombre: string;
@@ -19,14 +25,16 @@ const RestauranteContext = createContext<RestauranteContextType>({
 });
 
 export function RestauranteProvider({ children }: { children: ReactNode }) {
-  const [restaurante, setRestaurante] = useState<Restaurante>({ nombre: "", logo: null });
+  const [restaurante, setRestaurante] = useState<Restaurante>({
+    nombre: "",
+    logo: null,
+  });
 
   const loadRestaurante = async () => {
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
     const API = process.env.NEXT_PUBLIC_API_URL!;
-    const FILES = process.env.NEXT_PUBLIC_FILES_URL!;
 
     try {
       const res = await fetch(`${API}/admin/dashboard/`, {
@@ -38,7 +46,7 @@ export function RestauranteProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       setRestaurante({
         nombre: data.restaurante.nombre,
-        logo: data.restaurante.logo ? `${FILES}${data.restaurante.logo}` : null,
+        logo: data.restaurante.logo || null,
       });
     } catch (err) {
       console.error("Error cargando restaurante:", err);
@@ -50,7 +58,9 @@ export function RestauranteProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <RestauranteContext.Provider value={{ restaurante, reloadRestaurante: loadRestaurante }}>
+    <RestauranteContext.Provider
+      value={{ restaurante, reloadRestaurante: loadRestaurante }}
+    >
       {children}
     </RestauranteContext.Provider>
   );

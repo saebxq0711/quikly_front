@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import SessionManager from "@/components/SessionManager";
+import FaviconManager from "@/components/FaviconManager";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./globals.css";
 
@@ -14,34 +15,31 @@ export const metadata: Metadata = {
   description:
     "Soluciones de autoatención inteligente para transformar la experiencia de tus clientes. Disponible 24/7 con IA conversacional.",
   generator: "v0.app",
+  keywords: [
+    "autoatención", 
+    "inteligencia artificial", 
+    "IA conversacional", 
+    "atención al cliente", 
+    "self-service"
+  ],
+  authors: [{ name: "Quikly" }],
+  viewport: "width=device-width, initial-scale=1.0",
   icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
+    apple: [
+      { url: "/favicons/light/apple-touch-icon.png" },
     ],
-    apple: "/apple-icon.png",
+    other: [
+      { url: "/favicons/site.webmanifest", rel: "manifest" },
+    ],
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className={`font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <SessionManager />
+        <FaviconManager />
         {children}
         <Analytics />
       </body>

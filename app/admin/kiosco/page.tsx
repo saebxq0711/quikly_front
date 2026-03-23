@@ -623,7 +623,7 @@ function UserDetails({
               <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center overflow-hidden ring-2 ring-border/20">
                 {usuario.img_restaurante ? (
                   <img
-                    src={`${filesUrl}${usuario.img_restaurante}`}
+                    src={usuario.img_restaurante}
                     alt="Logo restaurante"
                     className="object-contain w-full h-full p-1"
                   />

@@ -66,10 +66,10 @@ function LoadingSpinner() {
       <div className="relative">
         {/* Outer ring */}
         <div className="w-24 h-24 rounded-full border-4 border-[#5CCFE6]/20" />
-        
+
         {/* Spinning arc */}
         <div className="absolute inset-0 w-24 h-24 rounded-full border-4 border-transparent border-t-[#5CCFE6] animate-spin" />
-        
+
         {/* Inner pulsing circle */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-12 h-12 bg-[#5CCFE6]/10 rounded-full animate-pulse flex items-center justify-center">
@@ -83,17 +83,28 @@ function LoadingSpinner() {
           </div>
         </div>
       </div>
-      
+
       {/* Loading text with dots animation */}
       <div className="mt-8 flex items-center gap-1">
-        <span className="text-lg font-medium text-foreground">Preparando tu experiencia</span>
+        <span className="text-lg font-medium text-foreground">
+          Preparando tu experiencia
+        </span>
         <span className="flex gap-1">
-          <span className="w-1.5 h-1.5 bg-[#5CCFE6] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-          <span className="w-1.5 h-1.5 bg-[#5CCFE6] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-          <span className="w-1.5 h-1.5 bg-[#5CCFE6] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+          <span
+            className="w-1.5 h-1.5 bg-[#5CCFE6] rounded-full animate-bounce"
+            style={{ animationDelay: "0ms" }}
+          />
+          <span
+            className="w-1.5 h-1.5 bg-[#5CCFE6] rounded-full animate-bounce"
+            style={{ animationDelay: "150ms" }}
+          />
+          <span
+            className="w-1.5 h-1.5 bg-[#5CCFE6] rounded-full animate-bounce"
+            style={{ animationDelay: "300ms" }}
+          />
         </span>
       </div>
-      
+
       {/* Shimmer bar */}
       <div className="mt-4 w-48 h-1 bg-muted rounded-full overflow-hidden">
         <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-[#5CCFE6] to-transparent animate-shimmer" />
@@ -121,7 +132,9 @@ function ErrorState() {
           />
         </svg>
       </div>
-      <h2 className="text-xl font-semibold text-foreground mb-2">No se pudo cargar el kiosco</h2>
+      <h2 className="text-xl font-semibold text-foreground mb-2">
+        No se pudo cargar el kiosco
+      </h2>
       <p className="text-muted-foreground text-center max-w-xs">
         Por favor, verifica tu conexión e intenta nuevamente
       </p>
@@ -161,13 +174,16 @@ export default function KioscoPage() {
       {/* Waves */}
       <WaveTop />
       <WaveBottom />
-      
+
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-[0.02] z-0">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, #000 1px, transparent 0)`,
-          backgroundSize: '40px 40px'
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, #000 1px, transparent 0)`,
+            backgroundSize: "40px 40px",
+          }}
+        />
       </div>
 
       {/* Main Content */}
@@ -176,7 +192,6 @@ export default function KioscoPage() {
         <main className="flex-1 flex items-center justify-center px-6 md:px-12 lg:px-20">
           <div className="w-full max-w-6xl">
             <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 lg:gap-16 items-center">
-              
               {/* Logo Section - Left */}
               <div
                 className={`
@@ -188,12 +203,12 @@ export default function KioscoPage() {
                 <div className="relative group">
                   {/* Glow effect behind logo */}
                   <div className="absolute -inset-4 bg-[#5CCFE6]/20 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
+
                   {/* Logo container - adaptive for square or rectangular */}
                   <div className="relative w-40 h-40 md:w-52 md:h-52 lg:w-60 lg:h-60 rounded-2xl bg-white shadow-2xl shadow-black/10 border border-border/50 overflow-hidden flex items-center justify-center p-4 transition-transform duration-500 group-hover:scale-105">
                     {restaurante.logo && !imageError ? (
                       <Image
-                        src={restaurante.logo.startsWith('http') ? restaurante.logo : `${process.env.NEXT_PUBLIC_FILES_URL || ''}${restaurante.logo}`}
+                        src={restaurante.logo || "/placeholder.png"}
                         alt={restaurante.nombre}
                         fill
                         className="object-contain p-4"
@@ -243,7 +258,9 @@ export default function KioscoPage() {
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-tight text-balance">
                     Bienvenido a{" "}
                     <span className="relative">
-                      <span className="relative z-10">{restaurante.nombre}</span>
+                      <span className="relative z-10">
+                        {restaurante.nombre}
+                      </span>
                       <span className="absolute bottom-2 left-0 w-full h-3 bg-[#5CCFE6]/30 -z-0 rounded" />
                     </span>
                   </h1>
@@ -257,8 +274,8 @@ export default function KioscoPage() {
                     ${mounted ? "animate-fade-in-up delay-300" : ""}
                   `}
                 >
-                  Ordena de forma rápida y sin filas. Toca la pantalla, elige tus productos 
-                  favoritos y disfruta en segundos.
+                  Ordena de forma rápida y sin filas. Toca la pantalla, elige
+                  tus productos favoritos y disfruta en segundos.
                 </p>
 
                 {/* CTA Button */}
@@ -289,7 +306,7 @@ export default function KioscoPage() {
                     <span className="absolute inset-0 rounded-2xl overflow-hidden">
                       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </span>
-                    
+
                     <span className="relative flex items-center gap-3">
                       <svg
                         className="w-6 h-6 md:w-7 md:h-7"
@@ -331,9 +348,18 @@ export default function KioscoPage() {
                   `}
                 >
                   {[
-                    { icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", text: "Rápido" },
-                    { icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", text: "Fácil" },
-                    { icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z", text: "Seguro" },
+                    {
+                      icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+                      text: "Rápido",
+                    },
+                    {
+                      icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+                      text: "Fácil",
+                    },
+                    {
+                      icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
+                      text: "Seguro",
+                    },
                   ].map((feature, i) => (
                     <div
                       key={feature.text}
@@ -352,7 +378,9 @@ export default function KioscoPage() {
                           d={feature.icon}
                         />
                       </svg>
-                      <span className="text-sm font-medium">{feature.text}</span>
+                      <span className="text-sm font-medium">
+                        {feature.text}
+                      </span>
                     </div>
                   ))}
                 </div>

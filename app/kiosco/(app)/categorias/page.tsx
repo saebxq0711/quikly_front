@@ -17,7 +17,10 @@ type Categoria = {
 /* =========================
    Utils
 ========================= */
-const buildFileUrl = (filesBase: string, path?: string | null): string | null => {
+const buildFileUrl = (
+  filesBase: string,
+  path?: string | null,
+): string | null => {
   if (!path) return null;
   if (path.startsWith("http")) return path;
   return `${filesBase}${path.startsWith("/") ? "" : "/"}${path}`;
@@ -28,7 +31,15 @@ const buildFileUrl = (filesBase: string, path?: string | null): string | null =>
 ========================= */
 function GridIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -39,7 +50,15 @@ function GridIcon({ className }: { className?: string }) {
 
 function ChevronRightIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="m9 18 6-6-6-6" />
     </svg>
   );
@@ -138,40 +157,26 @@ export default function CategoriasPage() {
       {/* Categories Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {categorias.map((cat, index) => {
-          const imgUrl = buildFileUrl(FILES, cat.img);
-          const showImage = imgUrl && !imgError[cat.id];
+          const showImage = cat.img && !imgError[cat.id]; // ✅ img ya es URL pública desde backend
 
           return (
             <button
               key={cat.id}
               onClick={() => router.push(`/kiosco/categorias/${cat.id}`)}
-              className="
-                group relative h-48 sm:h-56 rounded-2xl overflow-hidden
-                bg-muted
-                ring-2 ring-border/50
-                hover:ring-[#5CCFE6]/50
-                shadow-md hover:shadow-xl hover:shadow-[#5CCFE6]/10
-                transition-all duration-300
-                active:scale-[0.98]
-                focus:outline-none focus:ring-[#5CCFE6]
-                cursor-pointer
-                animate-fade-in-up
-              "
+              className="group relative h-48 sm:h-56 rounded-2xl overflow-hidden bg-muted ring-2 ring-border/50 hover:ring-[#5CCFE6]/50 shadow-md hover:shadow-xl hover:shadow-[#5CCFE6]/10 transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-[#5CCFE6] cursor-pointer animate-fade-in-up"
               style={{ animationDelay: `${index * 80}ms` }}
             >
               {/* Background Image */}
               {showImage && (
                 <Image
-                  src={imgUrl! || "/placeholder.svg"}
+                  src={cat.img!} // 🔹 URL pública directamente desde backend
                   alt={cat.nombre}
                   fill
                   unoptimized
-                  onError={() => setImgError((prev) => ({ ...prev, [cat.id]: true }))}
-                  className="
-                    object-cover
-                    transition-transform duration-500 ease-out
-                    group-hover:scale-110
-                  "
+                  onError={() =>
+                    setImgError((prev) => ({ ...prev, [cat.id]: true }))
+                  }
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                 />
               )}
 
@@ -185,14 +190,7 @@ export default function CategoriasPage() {
               )}
 
               {/* Gradient Overlay */}
-              <div 
-                className="
-                  absolute inset-0 
-                  bg-gradient-to-t from-black/80 via-black/40 to-transparent
-                  group-hover:from-black/90 group-hover:via-black/50
-                  transition-all duration-300
-                " 
-              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90 group-hover:via-black/50 transition-all duration-300" />
 
               {/* Content */}
               <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
@@ -200,31 +198,14 @@ export default function CategoriasPage() {
                   <h3 className="text-white text-lg sm:text-xl font-semibold tracking-tight">
                     {cat.nombre}
                   </h3>
-                  <div 
-                    className="
-                      w-8 h-8 rounded-full 
-                      bg-white/10 backdrop-blur-sm
-                      flex items-center justify-center
-                      group-hover:bg-[#5CCFE6] group-hover:text-black
-                      transition-all duration-300
-                      transform group-hover:translate-x-1
-                    "
-                  >
+                  <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-[#5CCFE6] group-hover:text-black transition-all duration-300 transform group-hover:translate-x-1">
                     <ChevronRightIcon className="w-4 h-4 text-white group-hover:text-black" />
                   </div>
                 </div>
               </div>
 
               {/* Hover Accent Line */}
-              <div 
-                className="
-                  absolute bottom-0 left-0 right-0 h-1
-                  bg-[#5CCFE6]
-                  transform scale-x-0 origin-left
-                  group-hover:scale-x-100
-                  transition-transform duration-300
-                "
-              />
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#5CCFE6] transform scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-300" />
             </button>
           );
         })}

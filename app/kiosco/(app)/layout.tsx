@@ -166,9 +166,14 @@ export default function KioscoAppLayout({ children }: { children: ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
 
-  const getImageUrl = (path?: string | null): string | undefined => {
-    if (!path) return undefined;
-    return `${FILES.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+  const getImageUrl = (url?: string | null): string | undefined => {
+    if (!url) return undefined;
+    try {
+      new URL(url); // valida que sea una URL válida
+      return url;
+    } catch {
+      return undefined;
+    }
   };
 
   const hideCartButton =
@@ -219,7 +224,7 @@ export default function KioscoAppLayout({ children }: { children: ReactNode }) {
               <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-muted ring-2 ring-border/50 group-hover:ring-[#5CCFE6]/50 transition-all duration-300 flex-shrink-0">
                 {restaurante?.logo ? (
                   <Image
-                    src={getImageUrl(restaurante.logo)!}
+                    src={restaurante.logo}
                     alt={restaurante.nombre}
                     fill
                     className="object-contain p-1"
@@ -384,7 +389,7 @@ export default function KioscoAppLayout({ children }: { children: ReactNode }) {
                         <div className="w-16 h-16 rounded-xl bg-background flex items-center justify-center flex-shrink-0 overflow-hidden">
                           {showImg ? (
                             <Image
-                              src={imgUrl as string} // 👈 aquí le dices a TS: “confía, no es null”
+                              src={imgUrl as string} 
                               alt={item.nombre}
                               width={64}
                               height={64}

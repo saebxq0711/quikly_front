@@ -47,7 +47,6 @@ type Categoria = {
 
 export default function MenuAdminPage() {
   const API = process.env.NEXT_PUBLIC_API_URL!;
-  const FILES = process.env.NEXT_PUBLIC_FILES_URL!;
   const router = useRouter();
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -379,7 +378,7 @@ export default function MenuAdminPage() {
                     <div className="relative h-50 bg-muted bottom-6">
                       {cat.img_categoria ? (
                         <img
-                          src={`${FILES}${cat.img_categoria}`}
+                          src={cat.img_categoria}
                           alt={cat.nombre}
                           className="w-full h-full object-cover"
                         />
@@ -605,7 +604,7 @@ export default function MenuAdminPage() {
             {selectedCategoria?.img_categoria && !newImage && (
               <div className="relative rounded-lg overflow-hidden">
                 <img
-                  src={`${FILES}${selectedCategoria.img_categoria}`}
+                  src={selectedCategoria.img_categoria}
                   className="w-full h-36 object-cover"
                   alt="Current"
                 />

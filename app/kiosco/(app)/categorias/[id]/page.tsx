@@ -47,37 +47,14 @@ type Producto = {
 /* =========================
    Image utils
 ========================= */
-function buildSafeImageSrc(
-  img?: string | null,
-  filesBase?: string
-): string | null {
+function buildSafeImageSrc(img?: string | null): string | null {
   if (!img) return null;
-
-  const clean = img.trim();
-  if (!clean) return null;
-
   try {
-    if (clean.startsWith("http")) {
-      new URL(clean);
-      return clean;
-    }
+    new URL(img); // valida que sea una URL válida
+    return img;
   } catch {
     return null;
   }
-
-  if (clean.startsWith("/")) {
-    if (!filesBase) return null;
-
-    try {
-      const full = `${filesBase}${clean}`;
-      new URL(full);
-      return full;
-    } catch {
-      return null;
-    }
-  }
-
-  return null;
 }
 
 /* =========================
@@ -215,16 +192,16 @@ export default function CategoriaProductosPage() {
           {/* Products Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {productos.map((p, i) => {
-              const imageSrc = buildSafeImageSrc(p.img, FILES);
+              const imageSrc = buildSafeImageSrc(p.img);
               const hasError = imgErrors[p.id];
               const showImage = imageSrc && !hasError;
 
               const hasToppings = p.grupos_opcion?.some(
-                (g) => g.tipo !== "tamaño"
+                (g) => g.tipo !== "tamaño",
               );
 
               const precioMostrar = p.tiene_promocion
-                ? p.precio_final ?? p.precio_base
+                ? (p.precio_final ?? p.precio_base)
                 : p.precio_base;
 
               return (

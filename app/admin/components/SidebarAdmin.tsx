@@ -105,12 +105,8 @@ export default function SidebarAdmin() {
       {/* Footer */}
       <div className="p-4 border-t border-sidebar-border">
         <div className="px-4 py-3 rounded-xl bg-sidebar-accent/50">
-          <p className="text-xs text-sidebar-foreground/50 mb-1">
-            Powered by
-          </p>
-          <p className="text-sm font-semibold text-sidebar-primary">
-            Quikly
-          </p>
+          <p className="text-xs text-sidebar-foreground/50 mb-1">Powered by</p>
+          <p className="text-sm font-semibold text-sidebar-primary">Quikly</p>
         </div>
       </div>
     </aside>

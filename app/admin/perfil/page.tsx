@@ -24,7 +24,6 @@ import {
 
 export default function PerfilAdminPage() {
   const API = process.env.NEXT_PUBLIC_API_URL!;
-  const FILES = process.env.NEXT_PUBLIC_FILES_URL!;
   const token =
     typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
@@ -295,7 +294,7 @@ export default function PerfilAdminPage() {
                                 src={
                                   preview
                                     ? preview
-                                    : `${FILES}${perfil.restaurante.logo}`
+                                    : `${perfil.restaurante.logo}`
                                 }
                                 className="w-full h-full object-contain p-2"
                                 alt="Logo del restaurante"

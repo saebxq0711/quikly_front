@@ -48,7 +48,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const FILES = process.env.NEXT_PUBLIC_FILES_URL!;
 const API = process.env.NEXT_PUBLIC_API_URL!;
 
 const DIAS_SEMANA = [
@@ -125,7 +124,7 @@ export default function PromocionAdminPage() {
     promo: any | null;
   }>({ open: false, promo: null });
 
-  const [activeTab, setActiveTab] = useState("crear");
+  const [activeTab, setActiveTab] = useState("lista");
 
   // Toast helpers
   const addToast = (type: Toast["type"], message: string) => {
@@ -669,10 +668,10 @@ export default function PromocionAdminPage() {
                       className="group bg-card border border-border/50 hover:border-primary/30 hover:shadow-xl transition-all duration-300 overflow-hidden"
                     >
                       {/* Promo Image */}
-                      <div className="relative h-44 bg-muted/30 overflow-hidden">
+                      <div className="relative h-50 bg-muted/30 overflow-hidden bottom-6">
                         {p.img_flyer ? (
                           <img
-                            src={`${FILES}${p.img_flyer}`}
+                            src={p.img_flyer}
                             alt={p.titulo}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
@@ -1310,14 +1309,16 @@ export default function PromocionAdminPage() {
         }
       >
         <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
+          <AlertDialogHeader className="text-center">
             <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-6 h-6 text-destructive" />
             </div>
-            <AlertDialogTitle className="text-center">
+
+            <AlertDialogTitle className="w-full text-center">
               ¿Eliminar promoción?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center">
+
+            <AlertDialogDescription className="text-start">
               Estás a punto de eliminar la promoción{" "}
               <span className="font-semibold text-foreground">
                 "{deleteModal.promoTitle}"
@@ -1325,7 +1326,8 @@ export default function PromocionAdminPage() {
               . Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="sm:justify-center gap-3">
+
+          <AlertDialogFooter className="flex justify-center gap-3 mt-4">
             <AlertDialogCancel className="sm:w-32">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={eliminarPromocion}
@@ -1406,75 +1408,109 @@ export default function PromocionAdminPage() {
         open={promoDetailModal.open}
         onOpenChange={(open) => setPromoDetailModal({ open, promo: null })}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 overflow-hidden [&>button]:hidden">
           {promoDetailModal.promo && (
             <>
-              <DialogHeader>
-                <DialogTitle>{promoDetailModal.promo.titulo}</DialogTitle>
-                <DialogDescription>Detalles de la promoción</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                {promoDetailModal.promo.img_flyer && (
-                  <img
-                    src={`${FILES}${promoDetailModal.promo.img_flyer}`}
-                    alt={promoDetailModal.promo.titulo}
-                    className="w-full h-48 object-cover rounded-xl"
-                  />
-                )}
-                {promoDetailModal.promo.descripcion && (
-                  <p className="text-muted-foreground">
-                    {promoDetailModal.promo.descripcion}
-                  </p>
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 rounded-lg bg-muted/50">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Días
-                    </p>
-                    <p className="font-medium">
-                      {getDiasLabel(promoDetailModal.promo.dias_semana)}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-muted/50">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Horario
-                    </p>
-                    <p className="font-medium">
-                      {promoDetailModal.promo.hora_inicio} -{" "}
-                      {promoDetailModal.promo.hora_fin}
-                    </p>
-                  </div>
+              {/* HEADER */}
+              <div className="p-6 border-b flex items-start justify-between">
+                <div>
+                  <DialogTitle className="text-xl font-semibold">
+                    {promoDetailModal.promo.titulo}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Detalles de la promoción
+                  </DialogDescription>
                 </div>
 
-                {/* Productos en la promoción */}
-                {promoDetailModal.promo.productos &&
-                  promoDetailModal.promo.productos.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                <Badge
+                  className={
+                    promoDetailModal.promo.estado_id === 1
+                      ? "bg-emerald-500"
+                      : "bg-muted-foreground"
+                  }
+                >
+                  {promoDetailModal.promo.estado_id === 1
+                    ? "Activa"
+                    : "Inactiva"}
+                </Badge>
+              </div>
+
+              {/* BODY */}
+              <div className="flex flex-1 overflow-hidden">
+                {/* IZQUIERDA → IMAGEN */}
+                <div className="w-1/2 bg-muted/30 flex items-center justify-center p-4 overflow-auto">
+                  {promoDetailModal.promo.img_flyer ? (
+                    <img
+                      src={promoDetailModal.promo.img_flyer}
+                      alt={promoDetailModal.promo.titulo}
+                      className="max-h-full object-contain rounded-lg shadow"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full">
+                      <Percent className="w-16 h-16 text-muted-foreground/30" />
+                    </div>
+                  )}
+                </div>
+
+                {/* DERECHA → INFO */}
+                <div className="w-1/2 p-6 overflow-y-auto space-y-6">
+                  {/* DESCRIPCIÓN */}
+                  {promoDetailModal.promo.descripcion && (
+                    <p className="text-muted-foreground leading-relaxed">
+                      {promoDetailModal.promo.descripcion}
+                    </p>
+                  )}
+
+                  {/* INFO GRID */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">
+                        Días
+                      </p>
+                      <p className="font-medium">
+                        {getDiasLabel(promoDetailModal.promo.dias_semana)}
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-xs text-muted-foreground uppercase mb-1">
+                        Horario
+                      </p>
+                      <p className="font-medium">
+                        {promoDetailModal.promo.hora_inicio} -{" "}
+                        {promoDetailModal.promo.hora_fin}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* PRODUCTOS */}
+                  {promoDetailModal.promo.productos?.length > 0 && (
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground uppercase">
                         Productos con descuento
                       </p>
-                      <div className="max-h-40 overflow-y-auto space-y-2">
+
+                      <div className="space-y-2">
                         {promoDetailModal.promo.productos.map(
                           (pp: any, idx: number) => {
                             const producto = productos.find(
                               (p) => p.id === pp.producto_id,
                             );
+
                             return (
                               <div
                                 key={idx}
-                                className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                                className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition"
                               >
                                 <span className="font-medium">
                                   {producto?.nombre ||
                                     `Producto ${pp.producto_id}`}
                                 </span>
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-emerald-500/10 text-emerald-600"
-                                >
+
+                                <Badge className="bg-emerald-500/10 text-emerald-600">
                                   {pp.tipo_descuento === "porcentaje"
-                                    ? `${pp.valor_descuento}% OFF`
-                                    : `$${pp.valor_descuento} OFF`}
+                                    ? `${pp.valor_descuento}%`
+                                    : `$${pp.valor_descuento}`}
                                 </Badge>
                               </div>
                             );
@@ -1483,25 +1519,11 @@ export default function PromocionAdminPage() {
                       </div>
                     </div>
                   )}
-
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                    Estado
-                  </p>
-                  <Badge
-                    className={
-                      promoDetailModal.promo.estado_id === 1
-                        ? "bg-emerald-500"
-                        : "bg-muted-foreground"
-                    }
-                  >
-                    {promoDetailModal.promo.estado_id === 1
-                      ? "Activa"
-                      : "Inactiva"}
-                  </Badge>
                 </div>
               </div>
-              <DialogFooter>
+
+              {/* FOOTER */}
+              <div className="p-4 border-t flex justify-end">
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -1510,7 +1532,7 @@ export default function PromocionAdminPage() {
                 >
                   Cerrar
                 </Button>
-              </DialogFooter>
+              </div>
             </>
           )}
         </DialogContent>
