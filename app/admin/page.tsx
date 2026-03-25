@@ -311,7 +311,7 @@ export default function AdminRestaurantePage() {
                   </div>
                   <div className="flex items-center gap-2 text-xs font-medium text-foreground bg-muted px-3 py-1.5 rounded-full">
                     <DollarSign className="w-3.5 h-3.5" />
-                    USD
+                    COP
                   </div>
                 </div>
                 <div className="h-64">
