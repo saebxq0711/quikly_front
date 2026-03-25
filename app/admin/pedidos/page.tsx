@@ -323,7 +323,7 @@ export default function PedidosAdminPage() {
         bodyColor: "#fff",
         padding: 12,
         cornerRadius: 12,
-        titleFont: { weight: "600" as const },
+        titleFont: { weight: 600 },
       },
     },
     scales: {
