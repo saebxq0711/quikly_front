@@ -5,6 +5,16 @@ import SidebarAdmin from "../../components/SidebarAdmin";
 import HeaderAdmin from "../../components/HeaderAdmin";
 import * as XLSX from "xlsx";
 import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Download,
+  Calendar,
+  ShoppingCart,
+  DollarSign,
+  Activity,
+  RefreshCw,
+  FileText,
+} from "lucide-react";
 
 type PedidoEstado = {
   estado: string;
@@ -26,6 +36,14 @@ type ReportePedidosResponse = {
   detalle: PedidoDetalle[];
 };
 
+const estadoColors: Record<string, string> = {
+  pendiente: "bg-amber-100 text-amber-700 border-amber-200",
+  preparando: "bg-blue-100 text-blue-700 border-blue-200",
+  listo: "bg-green-100 text-green-700 border-green-200",
+  entregado: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  cancelado: "bg-red-100 text-red-700 border-red-200",
+};
+
 export default function ReportePedidosPage() {
   const API = process.env.NEXT_PUBLIC_API_URL!;
   const token = () => localStorage.getItem("access_token");
@@ -33,13 +51,11 @@ export default function ReportePedidosPage() {
 
   const [loading, setLoading] = useState(true);
   const [reporte, setReporte] = useState<ReportePedidosResponse | null>(null);
-
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
 
   const cargarPedidos = async () => {
     setLoading(true);
-
     try {
       const params = new URLSearchParams();
       if (desde) params.append("desde", desde);
@@ -47,11 +63,7 @@ export default function ReportePedidosPage() {
 
       const res = await fetch(
         `${API}/admin/reportes/pedidos?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token()}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token()}` } },
       );
 
       if (!res.ok) {
@@ -84,7 +96,7 @@ export default function ReportePedidosPage() {
         Estado: p.estado,
         Cliente: p.cliente,
         Total: p.total,
-      }))
+      })),
     );
 
     const workbook = XLSX.utils.book_new();
@@ -92,158 +104,216 @@ export default function ReportePedidosPage() {
 
     const rango =
       desde || hasta ? `_${desde || "inicio"}_${hasta || "hoy"}` : "";
-
     XLSX.writeFile(workbook, `reporte_pedidos${rango}.xlsx`);
   };
 
+  const getEstadoClass = (estado: string) => {
+    return (
+      estadoColors[estado.toLowerCase()] ||
+      "bg-gray-100 text-gray-700 border-gray-200"
+    );
+  };
+
   return (
-    <div className="flex min-h-screen bg-[#0B0F1A] text-gray-100">
+    <div className="flex min-h-screen bg-background">
       <SidebarAdmin />
 
       <div className="flex-1 flex flex-col">
         <HeaderAdmin />
 
-        <main className="p-6 space-y-8">
-          {/* HEADER */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold">Reporte de Pedidos</h1>
-              <p className="text-gray-400 text-sm">
-                Seguimiento operativo y estados de pedidos
-              </p>
+        <main className="p-6 lg:p-8 space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card hover:bg-secondary transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">
+                  Reporte de Pedidos
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Seguimiento operativo y estados de pedidos
+                </p>
+              </div>
             </div>
 
             <button
-              onClick={() => router.back()}
-              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={exportarExcel}
+              disabled={!reporte?.detalle.length}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              ← Volver
+              <Download className="h-4 w-4" />
+              Exportar Excel
             </button>
           </div>
 
-          {/* FILTROS */}
-          <div className="bg-[#11162A] rounded-xl p-4 flex flex-wrap gap-4 items-end">
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-400 mb-1">Desde</label>
-              <input
-                type="date"
-                value={desde}
-                onChange={(e) => setDesde(e.target.value)}
-                className="bg-[#0B0F1A] border border-gray-700 rounded px-3 py-2 text-sm"
-              />
-            </div>
+          {/* Filtros */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Desde
+                </label>
+                <input
+                  type="date"
+                  value={desde}
+                  onChange={(e) => setDesde(e.target.value)}
+                  className="h-10 px-3 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
 
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-400 mb-1">Hasta</label>
-              <input
-                type="date"
-                value={hasta}
-                onChange={(e) => setHasta(e.target.value)}
-                className="bg-[#0B0F1A] border border-gray-700 rounded px-3 py-2 text-sm"
-              />
-            </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Hasta
+                </label>
+                <input
+                  type="date"
+                  value={hasta}
+                  onChange={(e) => setHasta(e.target.value)}
+                  className="h-10 px-3 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
 
-            <button
-              onClick={cargarPedidos}
-              className="ml-auto bg-indigo-600 hover:bg-indigo-500 transition px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              Aplicar filtros
-            </button>
+              <button
+                onClick={cargarPedidos}
+                className="flex items-center gap-2 h-10 px-4 rounded-lg bg-foreground text-background font-medium text-sm hover:bg-foreground/90 transition-colors"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                />
+                Aplicar
+              </button>
+            </div>
           </div>
 
           {/* KPIs */}
           {reporte && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <KPI
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <KPICard
                 title="Total Pedidos"
                 value={reporte.total_pedidos.toString()}
+                icon={ShoppingCart}
               />
-              <KPI
+              <KPICard
                 title="Ingresos Totales"
                 value={`$${reporte.total_ingresos.toFixed(2)}`}
+                icon={DollarSign}
               />
-              <KPI
+              <KPICard
                 title="Estados Activos"
                 value={reporte.por_estado.length.toString()}
+                icon={Activity}
               />
             </div>
           )}
 
-          {/* ESTADOS */}
+          {/* Estados */}
           {reporte && (
-            <div className="bg-[#11162A] rounded-xl p-4">
-              <h3 className="font-medium mb-3">Pedidos por estado</h3>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Pedidos por estado
+              </h3>
               <div className="flex flex-wrap gap-3">
                 {reporte.por_estado.map((e) => (
                   <div
                     key={e.estado}
-                    className="bg-[#0B0F1A] px-4 py-2 rounded-lg text-sm"
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium ${getEstadoClass(e.estado)}`}
                   >
-                    <span className="text-gray-400">{e.estado}</span>
-                    <span className="ml-2 font-semibold">{e.cantidad}</span>
+                    <span className="capitalize">{e.estado}</span>
+                    <span className="ml-2 font-bold">{e.cantidad}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* TABLA */}
-          <div className="bg-[#11162A] rounded-xl p-4">
-            <h3 className="font-medium mb-4">Detalle de pedidos</h3>
+          {/* Tabla */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                Detalle de pedidos
+              </h3>
+            </div>
 
             {loading ? (
-              <p className="text-sm text-gray-400">Cargando datos…</p>
+              <div className="p-8 text-center">
+                <RefreshCw className="h-8 w-8 text-primary animate-spin mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Cargando datos...
+                </p>
+              </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead className="text-gray-400 border-b border-gray-700">
-                  <tr>
-                    <th className="py-2 text-left">ID</th>
-                    <th className="py-2 text-left">Fecha</th>
-                    <th className="py-2 text-left">Cliente</th>
-                    <th className="py-2 text-left">Estado</th>
-                    <th className="py-2 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reporte?.detalle.length ? (
-                    reporte.detalle.map((p) => (
-                      <tr
-                        key={p.id_pedido}
-                        className="border-b border-gray-800 hover:bg-white/5"
-                      >
-                        <td className="py-2">{p.id_pedido}</td>
-                        <td className="py-2">{p.fecha}</td>
-                        <td className="py-2">{p.cliente}</td>
-                        <td className="py-2">{p.estado}</td>
-                        <td className="py-2 text-right font-medium">
-                          ${p.total.toFixed(2)}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-secondary/50">
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        ID
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        Fecha
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        Cliente
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        Estado
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {reporte?.detalle.length ? (
+                      reporte.detalle.map((p) => (
+                        <tr
+                          key={p.id_pedido}
+                          className="hover:bg-secondary/30 transition-colors"
+                        >
+                          <td className="px-4 py-3 font-mono text-foreground">
+                            #{p.id_pedido}
+                          </td>
+                          <td className="px-4 py-3 text-foreground">
+                            {p.fecha}
+                          </td>
+                          <td className="px-4 py-3 text-foreground">
+                            {p.cliente}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium border capitalize ${getEstadoClass(p.estado)}`}
+                            >
+                              {p.estado}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-foreground">
+                            ${p.total.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-4 py-8 text-center text-muted-foreground"
+                        >
+                          No hay pedidos para el rango seleccionado
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="py-4 text-center text-gray-400"
-                      >
-                        No hay pedidos para el rango seleccionado
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </div>
-
-          {/* EXPORT */}
-          <div className="flex justify-end">
-            <button
-              onClick={exportarExcel}
-              disabled={!reporte?.detalle.length}
-              className="text-sm text-green-400 hover:text-green-300 disabled:text-gray-500"
-            >
-              Exportar Excel
-            </button>
           </div>
         </main>
       </div>
@@ -251,15 +321,30 @@ export default function ReportePedidosPage() {
   );
 }
 
-/* =========================
-   COMPONENTES
-========================= */
+/* ========================= COMPONENTES ========================= */
 
-function KPI({ title, value }: { title: string; value: string }) {
+function KPICard({
+  title,
+  value,
+  icon: Icon,
+}: {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+}) {
   return (
-    <div className="bg-[#11162A] rounded-xl p-4">
-      <p className="text-xs text-gray-400">{title}</p>
-      <p className="text-2xl font-semibold mt-1">{value}</p>
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {title}
+          </p>
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+      </div>
     </div>
   );
 }

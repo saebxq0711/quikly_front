@@ -5,6 +5,16 @@ import SidebarAdmin from "../../components/SidebarAdmin";
 import HeaderAdmin from "../../components/HeaderAdmin";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
+import {
+  ArrowLeft,
+  Download,
+  Calendar,
+  DollarSign,
+  ShoppingBag,
+  Receipt,
+  TrendingUp,
+  RefreshCw,
+} from "lucide-react";
 
 type VentaDia = {
   fecha: string;
@@ -26,13 +36,11 @@ export default function ReporteVentasPage() {
 
   const [loading, setLoading] = useState(true);
   const [ventas, setVentas] = useState<VentasResponse | null>(null);
-
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
 
   const cargarVentas = async () => {
     setLoading(true);
-
     try {
       const params = new URLSearchParams();
       if (desde) params.append("desde", desde);
@@ -40,9 +48,7 @@ export default function ReporteVentasPage() {
 
       const res = await fetch(
         `${API}/admin/reportes/ventas?${params.toString()}`,
-        {
-          headers: { Authorization: `Bearer ${token()}` },
-        }
+        { headers: { Authorization: `Bearer ${token()}` } },
       );
 
       if (!res.ok) {
@@ -53,7 +59,6 @@ export default function ReporteVentasPage() {
 
       const data: VentasResponse = await res.json();
 
-      // 🔐 Validación mínima de contrato
       if (
         typeof data.total_ingresos !== "number" ||
         typeof data.total_pedidos !== "number" ||
@@ -88,138 +93,177 @@ export default function ReporteVentasPage() {
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-
     XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas");
 
     const rango =
       desde || hasta ? `_${desde || "inicio"}_${hasta || "hoy"}` : "";
-
     XLSX.writeFile(workbook, `reporte_ventas${rango}.xlsx`);
   };
 
   return (
-    <div className="flex min-h-screen bg-[#0B0F1A] text-gray-100">
+    <div className="flex min-h-screen bg-background">
       <SidebarAdmin />
 
       <div className="flex-1 flex flex-col">
         <HeaderAdmin />
 
-        <main className="p-6 space-y-8">
-          {/* HEADER */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              ← Volver
-            </button>
-
-            <div>
-              <h1 className="text-2xl font-semibold">Reporte de Ventas</h1>
-              <p className="text-gray-400 text-sm">
-                Análisis de ingresos y rendimiento del restaurante
-              </p>
+        <main className="p-6 lg:p-8 space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card hover:bg-secondary transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">
+                  Reporte de Ventas
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Análisis de ingresos y rendimiento del restaurante
+                </p>
+              </div>
             </div>
+
+            <button
+              onClick={exportarExcel}
+              disabled={!ventas || !ventas.detalle?.length}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4" />
+              Exportar Excel
+            </button>
           </div>
 
-          {/* FILTROS */}
-          <div className="bg-[#11162A] rounded-xl p-4 flex flex-wrap gap-4 items-end">
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-400 mb-1">Desde</label>
-              <input
-                type="date"
-                value={desde}
-                onChange={(e) => setDesde(e.target.value)}
-                className="bg-[#0B0F1A] border border-gray-700 rounded px-3 py-2 text-sm"
-              />
-            </div>
+          {/* Filtros */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Desde
+                </label>
+                <input
+                  type="date"
+                  value={desde}
+                  onChange={(e) => setDesde(e.target.value)}
+                  className="h-10 px-3 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
 
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-400 mb-1">Hasta</label>
-              <input
-                type="date"
-                value={hasta}
-                onChange={(e) => setHasta(e.target.value)}
-                className="bg-[#0B0F1A] border border-gray-700 rounded px-3 py-2 text-sm"
-              />
-            </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Hasta
+                </label>
+                <input
+                  type="date"
+                  value={hasta}
+                  onChange={(e) => setHasta(e.target.value)}
+                  className="h-10 px-3 rounded-lg border border-border bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
 
-            <button
-              onClick={cargarVentas}
-              className="ml-auto bg-indigo-600 hover:bg-indigo-500 transition px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              Aplicar filtros
-            </button>
+              <button
+                onClick={cargarVentas}
+                className="flex items-center gap-2 h-10 px-4 rounded-lg bg-foreground text-background font-medium text-sm hover:bg-foreground/90 transition-colors"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                />
+                Aplicar
+              </button>
+            </div>
           </div>
 
           {/* KPIs */}
           {ventas && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <KPI
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <KPICard
                 title="Ingresos Totales"
                 value={`$${(ventas.total_ingresos ?? 0).toFixed(2)}`}
+                icon={DollarSign}
+                trendUp
               />
-              <KPI title="Pedidos" value={ventas.total_pedidos.toString()} />
-              <KPI
+              <KPICard
+                title="Total Pedidos"
+                value={ventas.total_pedidos.toString()}
+                icon={ShoppingBag}
+              />
+              <KPICard
                 title="Ticket Promedio"
                 value={`$${(ventas.ticket_promedio ?? 0).toFixed(2)}`}
+                icon={Receipt}
               />
             </div>
           )}
 
-          {/* TABLA */}
-          <div className="bg-[#11162A] rounded-xl p-4">
-            <h3 className="font-medium mb-4">Detalle por día</h3>
+          {/* Tabla */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Detalle por día
+              </h3>
+            </div>
 
             {loading ? (
-              <p className="text-sm text-gray-400">Cargando datos…</p>
+              <div className="p-8 text-center">
+                <RefreshCw className="h-8 w-8 text-primary animate-spin mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Cargando datos...
+                </p>
+              </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead className="text-gray-400 border-b border-gray-700">
-                  <tr>
-                    <th className="py-2 text-left">Fecha</th>
-                    <th className="py-2 text-right">Pedidos</th>
-                    <th className="py-2 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ventas?.detalle?.length ? (
-                    ventas.detalle.map((d) => (
-                      <tr
-                        key={d.fecha}
-                        className="border-b border-gray-800 hover:bg-white/5"
-                      >
-                        <td className="py-2">{d.fecha}</td>
-                        <td className="py-2 text-right">{d.pedidos}</td>
-                        <td className="py-2 text-right font-medium">
-                          ${(d.total ?? 0).toFixed(2)}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-secondary/50">
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        Fecha
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        Pedidos
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {ventas?.detalle?.length ? (
+                      ventas.detalle.map((d) => (
+                        <tr
+                          key={d.fecha}
+                          className="hover:bg-secondary/30 transition-colors"
+                        >
+                          <td className="px-4 py-3 text-foreground">
+                            {d.fecha}
+                          </td>
+                          <td className="px-4 py-3 text-right text-foreground">
+                            {d.pedidos}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-foreground">
+                            ${(d.total ?? 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="px-4 py-8 text-center text-muted-foreground"
+                        >
+                          No hay datos para el rango seleccionado
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        className="py-4 text-center text-gray-400"
-                      >
-                        No hay datos para el rango seleccionado
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </div>
-
-          {/* EXPORT */}
-          <div className="flex justify-end">
-            <button
-              onClick={exportarExcel}
-              disabled={!ventas || !ventas.detalle?.length}
-              className="text-sm text-green-400 hover:text-green-300 disabled:text-gray-500"
-            >
-              Exportar Excel
-            </button>
           </div>
         </main>
       </div>
@@ -227,15 +271,34 @@ export default function ReporteVentasPage() {
   );
 }
 
-/* =========================
-   COMPONENTES
-========================= */
+/* ========================= COMPONENTES ========================= */
 
-function KPI({ title, value }: { title: string; value: string }) {
+function KPICard({
+  title,
+  value,
+  icon: Icon,
+  trend,
+  trendUp,
+}: {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  trend?: string;
+  trendUp?: boolean;
+}) {
   return (
-    <div className="bg-[#11162A] rounded-xl p-4">
-      <p className="text-xs text-gray-400">{title}</p>
-      <p className="text-2xl font-semibold mt-1">{value}</p>
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {title}
+          </p>
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+      </div>
     </div>
   );
 }

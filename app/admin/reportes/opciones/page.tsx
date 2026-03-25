@@ -5,12 +5,29 @@ import { useRouter } from "next/navigation";
 import SidebarAdmin from "../../components/SidebarAdmin";
 import HeaderAdmin from "../../components/HeaderAdmin";
 import * as XLSX from "xlsx";
+import {
+  ArrowLeft,
+  Download,
+  BarChart3,
+  Hash,
+  DollarSign,
+  Star,
+  RefreshCw,
+  Tag,
+} from "lucide-react";
 
 type OpcionReporte = {
   tipo_opcion: string;
   nombre_opcion: string;
   cantidad: number;
   total_adicional: number;
+};
+
+const tipoColors: Record<string, string> = {
+  tamaño: "bg-blue-100 text-blue-700",
+  extra: "bg-purple-100 text-purple-700",
+  topping: "bg-green-100 text-green-700",
+  salsa: "bg-orange-100 text-orange-700",
 };
 
 export default function ReporteOpcionesPage() {
@@ -66,114 +83,200 @@ export default function ReporteOpcionesPage() {
   };
 
   const totalUsos = opciones.reduce((acc, o) => acc + o.cantidad, 0);
-  const totalIngresos = opciones.reduce(
-    (acc, o) => acc + o.total_adicional,
-    0
-  );
+  const totalIngresos = opciones.reduce((acc, o) => acc + o.total_adicional, 0);
   const topOpcion = opciones[0];
 
+  // Agrupar por tipo
+  const tiposUnicos = [...new Set(opciones.map((o) => o.tipo_opcion))];
+
+  const getTipoClass = (tipo: string) => {
+    return tipoColors[tipo.toLowerCase()] || "bg-gray-100 text-gray-700";
+  };
+
   return (
-    <div className="flex min-h-screen bg-[#0B0F1A] text-gray-100">
+    <div className="flex min-h-screen bg-background">
       <SidebarAdmin />
 
       <div className="flex-1 flex flex-col">
         <HeaderAdmin />
 
-        <main className="p-6 space-y-8">
-          {/* HEADER */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              ← Volver
-            </button>
-
-            <div>
-              <h1 className="text-2xl font-semibold">
-                Opciones y Toppings
-              </h1>
-              <p className="text-gray-400 text-sm">
-                Uso e impacto económico de opciones adicionales
-              </p>
+        <main className="p-6 lg:p-8 space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center justify-center h-10 w-10 rounded-lg border border-border bg-card hover:bg-secondary transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">
+                  Opciones y Toppings
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Uso e impacto económico de opciones adicionales
+                </p>
+              </div>
             </div>
+
+            <button
+              onClick={exportarExcel}
+              disabled={!opciones.length}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4" />
+              Exportar Excel
+            </button>
           </div>
 
           {/* KPIs */}
           {!loading && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <KPI
-                title="Opciones seleccionadas"
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <KPICard
+                title="Opciones Seleccionadas"
                 value={totalUsos.toString()}
+                icon={Hash}
               />
-              <KPI
-                title="Ingreso adicional"
+              <KPICard
+                title="Ingreso Adicional"
                 value={`$${totalIngresos.toFixed(2)}`}
+                icon={DollarSign}
               />
-              <KPI
-                title="Opción más usada"
+              <KPICard
+                title="Opción más Usada"
                 value={topOpcion ? topOpcion.nombre_opcion : "—"}
+                subtitle={topOpcion ? `${topOpcion.cantidad} veces` : undefined}
+                icon={Star}
+                highlight
               />
             </div>
           )}
 
-          {/* TABLA */}
-          <div className="bg-[#11162A] rounded-xl p-4">
-            <h3 className="font-medium mb-4">Detalle</h3>
+          {/* Resumen por tipo */}
+          {!loading && tiposUnicos.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-primary" />
+                Resumen por tipo
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {tiposUnicos.map((tipo) => {
+                  const tipoOpciones = opciones.filter(
+                    (o) => o.tipo_opcion === tipo,
+                  );
+                  const totalTipo = tipoOpciones.reduce(
+                    (acc, o) => acc + o.cantidad,
+                    0,
+                  );
+                  return (
+                    <div
+                      key={tipo}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium ${getTipoClass(tipo)}`}
+                    >
+                      <span className="capitalize">{tipo}</span>
+                      <span className="ml-2 font-bold">{totalTipo}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Tabla */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-primary" />
+                Detalle de opciones
+              </h3>
+            </div>
 
             {loading ? (
-              <p className="text-sm text-gray-400">Cargando datos…</p>
+              <div className="p-8 text-center">
+                <RefreshCw className="h-8 w-8 text-primary animate-spin mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Cargando datos...
+                </p>
+              </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead className="text-gray-400 border-b border-gray-700">
-                  <tr>
-                    <th className="py-2 text-left">Tipo</th>
-                    <th className="py-2 text-left">Opción</th>
-                    <th className="py-2 text-right">Cantidad</th>
-                    <th className="py-2 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {opciones.length ? (
-                    opciones.map((o, idx) => (
-                      <tr
-                        key={`${o.nombre_opcion}-${idx}`}
-                        className="border-b border-gray-800 hover:bg-white/5 transition"
-                      >
-                        <td className="py-2 capitalize">
-                          {o.tipo_opcion}
-                        </td>
-                        <td className="py-2">{o.nombre_opcion}</td>
-                        <td className="py-2 text-right">{o.cantidad}</td>
-                        <td className="py-2 text-right font-medium">
-                          ${o.total_adicional.toFixed(2)}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-secondary/50">
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        Tipo
+                      </th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                        Opción
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        Cantidad
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {opciones.length ? (
+                      opciones.map((o, idx) => (
+                        <tr
+                          key={`${o.nombre_opcion}-${idx}`}
+                          className="hover:bg-secondary/30 transition-colors"
+                        >
+                          <td className="px-4 py-3">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${getTipoClass(o.tipo_opcion)}`}
+                            >
+                              {o.tipo_opcion}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-medium text-foreground">
+                            <div className="flex items-center gap-2">
+                              {o.nombre_opcion}
+                              {idx === 0 && (
+                                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-right text-foreground">
+                            {o.cantidad}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-foreground">
+                            ${o.total_adicional.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="px-4 py-8 text-center text-muted-foreground"
+                        >
+                          No hay opciones registradas
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="py-4 text-center text-gray-400"
-                      >
-                        No hay opciones registradas
-                      </td>
-                    </tr>
+                    )}
+                  </tbody>
+                  {opciones.length > 0 && (
+                    <tfoot>
+                      <tr className="bg-secondary/30 font-semibold">
+                        <td colSpan={2} className="px-4 py-3 text-foreground">
+                          Total
+                        </td>
+                        <td className="px-4 py-3 text-right text-foreground">
+                          {totalUsos}
+                        </td>
+                        <td className="px-4 py-3 text-right text-foreground">
+                          ${totalIngresos.toFixed(2)}
+                        </td>
+                      </tr>
+                    </tfoot>
                   )}
-                </tbody>
-              </table>
+                </table>
+              </div>
             )}
-          </div>
-
-          {/* EXPORT */}
-          <div className="flex justify-end">
-            <button
-              onClick={exportarExcel}
-              disabled={!opciones.length}
-              className="text-sm text-green-400 hover:text-green-300 disabled:text-gray-500"
-            >
-              Exportar Excel
-            </button>
           </div>
         </main>
       </div>
@@ -181,15 +284,45 @@ export default function ReporteOpcionesPage() {
   );
 }
 
-/* =========================
-   COMPONENTES
-========================= */
+/* ========================= COMPONENTES ========================= */
 
-function KPI({ title, value }: { title: string; value: string }) {
+function KPICard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  highlight,
+}: {
+  title: string;
+  value: string;
+  subtitle?: string;
+  icon: React.ElementType;
+  highlight?: boolean;
+}) {
   return (
-    <div className="bg-[#11162A] rounded-xl p-4">
-      <p className="text-xs text-gray-400">{title}</p>
-      <p className="text-2xl font-semibold mt-1">{value}</p>
+    <div
+      className={`rounded-xl border bg-card p-5 ${highlight ? "border-primary/30 bg-gradient-to-br from-primary/5 to-transparent" : "border-border"}`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {title}
+          </p>
+          <p
+            className={`text-2xl font-bold truncate ${highlight ? "text-primary" : "text-foreground"}`}
+          >
+            {value}
+          </p>
+          {subtitle && (
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
+          )}
+        </div>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-lg shrink-0 ${highlight ? "bg-primary/20" : "bg-primary/10"}`}
+        >
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+      </div>
     </div>
   );
 }
