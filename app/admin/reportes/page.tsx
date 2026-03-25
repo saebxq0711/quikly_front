@@ -68,7 +68,7 @@ export default function ReportesHubPage() {
           {/* Header */}
           <div className="space-y-2">
             <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-foreground">
-              Reportes & Analítica
+              Reportes y Analítica
             </h1>
             <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
               Información estratégica para la toma de decisiones del restaurante.
